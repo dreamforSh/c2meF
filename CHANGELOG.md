@@ -62,11 +62,6 @@ All notable changes to this project will be documented in this file.
   - Optimization: Use indexed for loop instead of enhanced for loop, cache array length
   - Effect: Reduced allocation and improved loop performance
 
-- **Optimized view distance updates**
-  - Location: `c2me_notickvd/.../PlayerNoTickDistanceMap.java`
-  - Optimization: Avoid creating intermediate ChunkPos objects during view distance changes
-  - Effect: Reduced GC pressure during view distance updates
-
 - **Optimized priority distance calculation**
   - Location: `c2me_base/.../SchedulingManager.java`
   - Optimization: Use long-based Chebyshev distance calculation instead of creating ChunkPos objects
