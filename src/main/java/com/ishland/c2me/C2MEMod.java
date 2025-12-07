@@ -76,7 +76,7 @@ public class C2MEMod {
                 if (!suppressLog) LOGGER.info("{} read speed: {} MB/s ({} MB/s compressed)", name, decimalFormat.format((readAllBytes.length / 1024.0 / 1024.0) / ((endTime - startTime) / 1_000_000_000.0)), decimalFormat.format((outputStream.size() / 1024.0 / 1024.0) / ((endTime - startTime) / 1_000_000_000.0)));
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+            LOGGER.error("Error during benchmark", t);
         }
     }
 

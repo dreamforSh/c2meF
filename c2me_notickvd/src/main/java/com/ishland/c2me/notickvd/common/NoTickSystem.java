@@ -5,6 +5,8 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.threadly.concurrent.NoThreadScheduler;
 
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ import net.minecraft.server.level.Ticket;
 import net.minecraft.world.level.ChunkPos;
 
 public class NoTickSystem {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NoTickSystem.class);
 
     private final PlayerNoTickDistanceMap playerNoTickDistanceMap;
     private final NormalTicketDistanceMap normalTicketDistanceMap;
@@ -62,7 +66,7 @@ public class NoTickSystem {
     }
 
     public void tickScheduler() {
-        this.noThreadScheduler.tick(Throwable::printStackTrace);
+        this.noThreadScheduler.tick(t -> LOGGER.error("Error in NoThreadScheduler", t));
     }
 
     public void beforeTicketTicks() {
@@ -92,7 +96,7 @@ public class NoTickSystem {
                     try {
                         task.run();
                     } catch (Throwable t) {
-                        t.printStackTrace();
+                        LOGGER.error("Error executing NoTickSystem task", t);
                     }
                 }
 
@@ -130,7 +134,7 @@ public class NoTickSystem {
             try {
                 runnable.run();
             } catch (Throwable t) {
-                t.printStackTrace();
+                LOGGER.error("Error draining queue", t);
             }
         }
     }

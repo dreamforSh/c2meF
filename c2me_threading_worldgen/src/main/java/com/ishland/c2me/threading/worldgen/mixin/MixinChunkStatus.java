@@ -18,6 +18,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -41,6 +43,8 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 
 @Mixin(ChunkStatus.class)
 public abstract class MixinChunkStatus implements IChunkStatus {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MixinChunkStatus.class);
 
     @Shadow
     @Final
@@ -75,7 +79,7 @@ public abstract class MixinChunkStatus implements IChunkStatus {
         if ((Object) this == ChunkStatus.LIGHT) {
             this.reducedTaskRadius = 1;
         }
-        System.out.printf("%s task radius: %d -> %d%n", this, this.range, this.reducedTaskRadius);
+        LOGGER.info("{} task radius: {} -> {}", this, this.range, this.reducedTaskRadius);
     }
 
     @Override
@@ -149,7 +153,7 @@ public abstract class MixinChunkStatus implements IChunkStatus {
         }
 
         completableFuture.exceptionally(throwable -> {
-            throwable.printStackTrace();
+            LOGGER.error("Error during chunk generation for {}", targetChunk.getPos(), throwable);
             return null;
         });
 

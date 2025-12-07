@@ -164,10 +164,14 @@ public class PlayerNoTickDistanceMap extends ChunkTracker {
 
     public void setViewDistance(int viewDistance) {
         this.viewDistance = Mth.clamp(viewDistance, 3, 249);
-        sourceChunks.forEach((long value) -> {
-            removeSource(new ChunkPos(value));
-            addSource(new ChunkPos(value));
-        });
+        // C2ME - Optimized: Avoid creating intermediate ChunkPos objects
+        final long[] sources = sourceChunks.toLongArray();
+        for (long value : sources) {
+            this.update(value, Integer.MAX_VALUE, false);
+        }
+        for (long value : sources) {
+            this.update(value, 249 - this.viewDistance, true);
+        }
     }
 
     public int getPendingTicketUpdatesCount() {

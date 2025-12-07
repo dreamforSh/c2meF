@@ -62,10 +62,10 @@ public class SchedulingManager {
         int fromLevel = prioritiesFromLevel.get(pos);
         int fromSyncLoad;
         if (currentSyncLoad != null) {
-            final int chebyshevDistance = chebyshev(new ChunkPos(pos), currentSyncLoad);
+            // C2ME - Optimized: use long-based chebyshev to avoid ChunkPos allocation
+            final int chebyshevDistance = chebyshev(pos, currentSyncLoad.toLong());
             if (chebyshevDistance <= 8) {
                 fromSyncLoad = chebyshevDistance;
-//                System.out.println("dist for chunk [%d,%d] is %d".formatted(currentSyncLoad.x, currentSyncLoad.z, chebyshevDistance));
             } else {
                 fromSyncLoad = MAX_LEVEL;
             }

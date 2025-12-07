@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2025-12-06
+## [Unreleased] - 2025-12-05
 
 ### Fixed
 #### Thread Safety Fixes
@@ -28,8 +28,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 #### Error Handling Improvements
 - **Replaced printStackTrace() with proper logging**
-  - Location: `SchedulingAsyncCombinedLock.java`, `NeighborLockingTask.java`
-  - Changed: Use SLF4J Logger instead of stack trace printing for better log management
+  - Location: `SchedulingAsyncCombinedLock.java`, `NeighborLockingTask.java`, `NoTickSystem.java`, `MixinChunkStatus.java`, `C2MEMod.java`
+  - Changed: Use SLF4J Logger instead of stack trace printing / System.out.printf for better log management
 
 - **Added ForkJoinPool compatibility**
   - Location: `c2me_fixes_chunkio_threading_issues/.../SynchronizedCodec.java`
@@ -56,4 +56,19 @@ All notable changes to this project will be documented in this file.
   - Location: `c2me_base/.../DynamicPriorityQueue.java`
   - Added: `isEmpty()` method for O(1) fast checking
   - Effect: Reduced queue checking overhead
+
+- **Optimized lock checking in NeighborLockingTask**
+  - Location: `c2me_base/.../NeighborLockingTask.java`
+  - Optimization: Use indexed for loop instead of enhanced for loop, cache array length
+  - Effect: Reduced allocation and improved loop performance
+
+- **Optimized view distance updates**
+  - Location: `c2me_notickvd/.../PlayerNoTickDistanceMap.java`
+  - Optimization: Avoid creating intermediate ChunkPos objects during view distance changes
+  - Effect: Reduced GC pressure during view distance updates
+
+- **Optimized priority distance calculation**
+  - Location: `c2me_base/.../SchedulingManager.java`
+  - Optimization: Use long-based Chebyshev distance calculation instead of creating ChunkPos objects
+  - Effect: Reduced object allocation during priority updates
 

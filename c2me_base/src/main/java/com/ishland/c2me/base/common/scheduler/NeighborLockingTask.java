@@ -35,14 +35,21 @@ public class NeighborLockingTask<T> implements ScheduledTask {
     @Override
     public boolean tryPrepare() {
         final NeighborLockingManager lockingManager = this.schedulingManager.getNeighborLockingManager();
-        for (long l : names) {
+        final long[] names = this.names;
+        final int len = names.length;
+        
+        // C2ME - Optimized: Check all locks first before acquiring any
+        for (int i = 0; i < len; i++) {
+            final long l = names[i];
             if (lockingManager.isLocked(l)) {
                 lockingManager.addReleaseListener(l, () -> this.schedulingManager.enqueue(this));
                 return false;
             }
         }
-        for (long l : names) {
-            lockingManager.acquireLock(l);
+        
+        // All locks available, acquire them
+        for (int i = 0; i < len; i++) {
+            lockingManager.acquireLock(names[i]);
         }
         acquired = true;
         return true;
