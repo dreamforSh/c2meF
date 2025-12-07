@@ -30,7 +30,13 @@ public class SchedulingAsyncCombinedLock<T> implements ScheduledTask {
     public SchedulingAsyncCombinedLock(AsyncNamedLock<ChunkPos> lock, long center, Set<ChunkPos> names, BooleanSupplier isCancelled, Consumer<SchedulingAsyncCombinedLock<T>> readdForExecution, Supplier<CompletableFuture<T>> action, String desc, boolean async) {
         this.lock = lock;
         this.center = center;
-        this.names = names.toArray(ChunkPos[]::new);
+        // C2ME - Sort names to ensure consistent lock ordering and prevent deadlocks
+        this.names = names.stream()
+                .sorted((a, b) -> {
+                    int xCmp = Integer.compare(a.x, b.x);
+                    return xCmp != 0 ? xCmp : Integer.compare(a.z, b.z);
+                })
+                .toArray(ChunkPos[]::new);
         this.isCancelled = isCancelled;
         this.readdForExecution = readdForExecution;
         this.action = action;
@@ -86,8 +92,7 @@ public class SchedulingAsyncCombinedLock<T> implements ScheduledTask {
             }
             if (!triedRelock) {
                 // shouldn't happen at all...
-                System.err.println("Some issue occurred while doing locking, retrying");
-                return this.tryAcquire();
+                throw new IllegalStateException("Failed to acquire any lock during tryAcquire - this indicates a logical error");
             }
             return false;
         }
@@ -104,12 +109,12 @@ public class SchedulingAsyncCombinedLock<T> implements ScheduledTask {
             try {
                 token.releaseLock();
             } catch (Throwable t) {
-                t.printStackTrace();
+                org.slf4j.LoggerFactory.getLogger(SchedulingAsyncCombinedLock.class).error("Failed to release lock token", t);
             }
             try {
                 postAction.run();
             } catch (Throwable t) {
-                t.printStackTrace();
+                org.slf4j.LoggerFactory.getLogger(SchedulingAsyncCombinedLock.class).error("Failed to execute post action", t);
             }
             if (throwable != null) this.future.completeExceptionally(throwable);
             else this.future.complete(result);

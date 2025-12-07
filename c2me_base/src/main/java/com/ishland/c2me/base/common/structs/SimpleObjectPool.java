@@ -31,7 +31,7 @@ public class SimpleObjectPool<T> {
     public T alloc() {
         final T object;
         synchronized (this) {
-            if (this.allocatedCount >= this.size) { // oversized, falling back to normal alloc
+            if (this.allocatedCount >= this.size) {
                 object = this.constructor.apply(this);
                 return object;
             }
@@ -48,9 +48,12 @@ public class SimpleObjectPool<T> {
     }
 
     public void release(T object) {
+        if (object == null) return;
         synchronized (this) {
-            if (this.allocatedCount == 0) return; // pool is full
-            this.cachedObjects[--this.allocatedCount] = object; // store the object into the pool
+            if (this.allocatedCount == 0) return;
+
+            this.initializer.accept(object);
+            this.cachedObjects[--this.allocatedCount] = object;
         }
     }
 

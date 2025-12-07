@@ -18,7 +18,13 @@ public class AsyncCombinedLock {
 
     public AsyncCombinedLock(AsyncNamedLock<ChunkPos> lock, Set<ChunkPos> names) {
         this.lock = lock;
-        this.names = names.toArray(ChunkPos[]::new);
+
+        this.names = names.stream()
+                .sorted((a, b) -> {
+                    int xCmp = Integer.compare(a.x, b.x);
+                    return xCmp != 0 ? xCmp : Integer.compare(a.z, b.z);
+                })
+                .toArray(ChunkPos[]::new);
         this.tryAcquire();
     }
 
@@ -56,8 +62,7 @@ public class AsyncCombinedLock {
             }
             if (!triedRelock) {
                 // shouldn't happen at all...
-                System.err.println("Some issue occurred while doing locking, retrying");
-                this.tryAcquire();
+                throw new IllegalStateException("Failed to acquire any lock during tryAcquire - this indicates a logical error");
             }
         }
     }

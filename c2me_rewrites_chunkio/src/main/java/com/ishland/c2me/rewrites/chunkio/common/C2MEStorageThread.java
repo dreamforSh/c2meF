@@ -91,13 +91,18 @@ public class C2MEStorageThread extends Thread {
                     this.closeFuture.complete(null);
                     break;
                 } else {
-                    // attempt to spin-wait before sleeping
+                    // C2ME - Aggressive spinning for maximum I/O throughput
                     if (!pollTasks()) {
                         Thread.interrupted(); // clear interrupt flag
-                        for (int i = 0; i < 5000; i ++) {
+                        int spinCount = 0;
+                        // Spin aggressively before parking
+                        while (spinCount < 10000) {
                             if (pollTasks()) continue main_loop;
-                            LockSupport.parkNanos("Spin-waiting for tasks", 10_000); // 100us
+                            Thread.onSpinWait();
+                            spinCount++;
                         }
+                        // Brief park if still no work
+                        LockSupport.parkNanos("Spin-waiting for tasks", 100L); // 100ns
                     }
                     synchronized (sync) {
                         if (this.hasPendingTasks() || this.closing.get()) continue main_loop;
@@ -223,10 +228,10 @@ public class C2MEStorageThread extends Thread {
 
     private boolean handlePendingReads() {
         boolean hasWork = false;
-        while (!pendingReadRequests.isEmpty()) {
-            ReadRequest readRequest = this.pendingReadRequests.poll();
+        ReadRequest readRequest;
+        // Batch process read requests for better performance
+        while ((readRequest = this.pendingReadRequests.poll()) != null) {
             hasWork = true;
-            assert readRequest != null;
             final long pos = readRequest.pos;
             final CompletableFuture<CompoundTag> future = readRequest.future;
             final StreamTagVisitor scanner = readRequest.scanner;

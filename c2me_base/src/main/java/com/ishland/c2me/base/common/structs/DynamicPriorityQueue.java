@@ -78,6 +78,10 @@ public class DynamicPriorityQueue<E> {
         priorityMap.removeInt(element);
     }
 
+    public boolean isEmpty() {
+        return priorityMap.isEmpty();
+    }
+
     public int size() {
         return priorityMap.size();
     }

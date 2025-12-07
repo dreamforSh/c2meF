@@ -19,33 +19,60 @@ public class SynchronizedCodec<A> implements Codec<A> {
 
     @Override
     public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> ops, T input) {
-        try {
-            lock.lockInterruptibly();
-            return this.delegate.decode(ops, input);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) lock.unlock();
+        // C2ME - Use ManagedBlocker for ForkJoinPool compatibility
+        if (Thread.currentThread() instanceof java.util.concurrent.ForkJoinWorkerThread) {
+            ManagedLocker blocker = new ManagedLocker();
+            try {
+                ForkJoinPool.managedBlock(blocker);
+                return this.delegate.decode(ops, input);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (blocker.hasLock) lock.unlock();
+            }
+        } else {
+            try {
+                lock.lockInterruptibly();
+                return this.delegate.decode(ops, input);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (lock.isHeldByCurrentThread()) lock.unlock();
+            }
         }
     }
 
     @Override
     public <T> DataResult<T> encode(A input, DynamicOps<T> ops, T prefix) {
-        try {
-            lock.lockInterruptibly();
-            return this.delegate.encode(input, ops, prefix);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) lock.unlock();
+        // C2ME - Use ManagedBlocker for ForkJoinPool compatibility
+        if (Thread.currentThread() instanceof java.util.concurrent.ForkJoinWorkerThread) {
+            ManagedLocker blocker = new ManagedLocker();
+            try {
+                ForkJoinPool.managedBlock(blocker);
+                return this.delegate.encode(input, ops, prefix);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (blocker.hasLock) lock.unlock();
+            }
+        } else {
+            try {
+                lock.lockInterruptibly();
+                return this.delegate.encode(input, ops, prefix);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (lock.isHeldByCurrentThread()) lock.unlock();
+            }
         }
     }
 
     class ManagedLocker implements ForkJoinPool.ManagedBlocker {
         boolean hasLock = false;
-        public boolean block() {
+        public boolean block() throws InterruptedException {
             if (!hasLock)
-                lock.lock();
+                lock.lockInterruptibly();
+            hasLock = true;
             return true;
         }
         public boolean isReleasable() {

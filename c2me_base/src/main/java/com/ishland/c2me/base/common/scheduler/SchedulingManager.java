@@ -104,23 +104,31 @@ public class SchedulingManager {
     }
 
     private void updateSyncLoadInternal(ChunkPos pos) {
-        long startTime = System.nanoTime();
+        // C2ME - Optimized: removed unused timing code
         for (int xOff = -8; xOff <= 8; xOff++) {
             for (int zOff = -8; zOff <= 8; zOff++) {
                 updatePriorityInternal(ChunkPos.asLong(pos.x + xOff, pos.z + zOff));
             }
         }
-        long endTime = System.nanoTime();
     }
 
     private void scheduleExecution() {
+        // C2ME - Optimized: more aggressive scheduling
         if (scheduledCount.get() < maxScheduled && scheduled.compareAndSet(false, true)) {
             this.executor.execute(() -> {
-                ScheduleStatus status;
-                while (scheduledCount.get() < maxScheduled && (status = scheduleExecutionInternal()).success) {
-                    if (!status.async) scheduledCount.incrementAndGet();
+                try {
+                    ScheduleStatus status;
+                    // Batch schedule multiple tasks for better throughput
+                    while (scheduledCount.get() < maxScheduled && (status = scheduleExecutionInternal()).success) {
+                        if (!status.async) scheduledCount.incrementAndGet();
+                    }
+                } finally {
+                    scheduled.set(false);
+                    // Immediately try to schedule more if queue is not empty
+                    if (scheduledCount.get() < maxScheduled && !queue.isEmpty()) {
+                        scheduleExecution();
+                    }
                 }
-                scheduled.set(false);
             });
         }
     }

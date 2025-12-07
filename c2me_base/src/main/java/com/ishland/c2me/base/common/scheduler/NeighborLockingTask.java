@@ -64,7 +64,7 @@ public class NeighborLockingTask<T> implements ScheduledTask {
             try {
                 postAction.run();
             } catch (Throwable t) {
-                t.printStackTrace();
+                org.slf4j.LoggerFactory.getLogger(NeighborLockingTask.class).error("Failed to execute post action", t);
             }
             if (throwable != null) this.future.completeExceptionally(throwable);
             else this.future.complete(result);

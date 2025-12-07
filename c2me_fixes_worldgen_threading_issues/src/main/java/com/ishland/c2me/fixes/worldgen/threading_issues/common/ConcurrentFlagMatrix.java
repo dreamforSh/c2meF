@@ -43,9 +43,13 @@ public class ConcurrentFlagMatrix extends WoodlandMansionPieces.SimpleGrid {
 
     @Override
     public void setif(int i, int j, int expected, int newValue) {
-        // semi-VanillaCopy
-        if (this.get(i, j) == expected) {
-            this.set(i, j, newValue);
+        rwLock.writeLock().lock();
+        try {
+            if (super.get(i, j) == expected) {
+                super.set(i, j, newValue);
+            }
+        } finally {
+            rwLock.writeLock().unlock();
         }
     }
 
