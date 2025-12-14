@@ -15,6 +15,16 @@ plugins {
 
 apply plugin: 'org.spongepowered.mixin'
 
+repositories {
+    maven {
+        name 'Curseforge Maven'
+        url 'https://www.cursemaven.com'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
+}
+
 base {
     archivesName = "${mod_id}F-base-mc${minecraft_version}-${mod_version}"
 }
@@ -28,13 +38,16 @@ minecraft {
 mixin {
     add sourceSets.main, "c2me_base.refmap.json"
     config "c2me_base.mixins.json"
+
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-}
+    compileOnly fg.deobf(files(fileTree(dir: 'libs', includes: ['*.jar'])))
+    
 
+}
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

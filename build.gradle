@@ -179,6 +179,7 @@ allprojects {
         compileOnly("net.objecthunter:exp4j:${exp4j_version}")
         compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
         compileOnly("io.izzel.arclight:mixin-tools:${mixin_tools_version}")
+        compileOnly fg.deobf(files(fileTree(dir: 'libs', includes: ['*.jar'])))
     }
 }
 
